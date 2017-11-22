@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use lib "/opt/c7a-perl/current/cmd/local/lib/perl5";
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
+# Remember to use `SKIP_SYS_RUNALONE=1 /opt/tdr/current/sbin/wip-tdrexport` to skip this test...
+use Sys::RunAlone silent => 1;
+use Getopt::Long;
+use CIHM::Meta::Export;
+
+my $conf = "/etc/canadiana/wip/wip.conf";
+my $skip = 0;
+my $maxprocs = 4;
+my $limit;
+my $timelimit;
+GetOptions (
+    'conf:s' => \$conf,
+    'skip:i' => \$skip,
+    'maxprocs:i' => \$maxprocs,
+    'limit:i' => \$limit,
+    'timelimit:i' => \$timelimit
+    );
+
+CIHM::Meta::Export->new({ 
+    configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
+    limit => $limit, timelimit => $timelimit
+                        })->export;
+
+1;
+__END__
