@@ -2,15 +2,20 @@
 
 use strict;
 use warnings;
-
-use lib "/opt/c7a-perl/current/cmd/local/lib/perl5";
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
-
-# Remember to use `SKIP_SYS_RUNALONE=1 /opt/tdr/current/sbin/wip-tdrexport` to skip this test...
-use Sys::RunAlone silent => 1;
 use Getopt::Long;
 use CIHM::Meta::Export;
+
+use Fcntl qw(:DEFAULT :flock);
+my $lockfile = '/var/lock/tdr/wip-tdrexport';
+
+# Only allow one instance to run at a time..
+sysopen(FH, $lockfile, O_WRONLY | O_CREAT) 
+  or die "can't open lockfile=$lockfile: $!\n";
+flock(FH, LOCK_EX | LOCK_NB)
+  or exit 0;
+
 
 my $conf = "/etc/canadiana/wip/wip.conf";
 my $skip = 0;
