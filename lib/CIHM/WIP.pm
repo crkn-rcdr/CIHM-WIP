@@ -8,6 +8,19 @@ use CIHM::WIP::REST::tdrepo;
 use CIHM::WIP::REST::wipmeta;
 use Data::Dumper;
 
+=head1 NAME
+
+CIHM::WIP - The great new CIHM::WIP!
+
+=head1 VERSION
+
+Version 0.02
+
+=cut
+
+our $VERSION = '0.02';
+
+
 sub new {
     
     my($self, $configpath) = @_;
