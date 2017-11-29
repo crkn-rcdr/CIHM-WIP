@@ -1,11 +1,11 @@
-package CIHM::Meta::Mallet::Worker;
+package CIHM::WIP::Mallet::Worker;
 
 use strict;
 use AnyEvent;
 use Try::Tiny;
 use CIHM::WIP;
-use CIHM::WIP::REST::ContentServer;
-use CIHM::Meta::Mallet::Process;
+use CIHM::TDR::REST::ContentServer;
+use CIHM::WIP::Mallet::Process;
 use Log::Log4perl;
 use JSON;
 use Data::Dumper;
@@ -26,13 +26,13 @@ sub initworker {
     if (! ($self->{WIP} = CIHM::WIP->new($configpath))) {
         die "Wasn't able to build CIHM::WIP object\n";
     }
-    $self->{cserver} = new CIHM::WIP::REST::ContentServer(
+    $self->{cserver} = new CIHM::TDR::REST::ContentServer(
         {
             conf => $configpath
         });
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Mallet");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Mallet");
 
 }
 
@@ -117,7 +117,7 @@ sub swing {
       # Handle and record any errors
       try {
           $status = JSON::true;
-          my $process = new  CIHM::Meta::Mallet::Process(
+          my $process = new  CIHM::WIP::Mallet::Process(
               {
                   aip => $aip,
                   configpath => $configpath,

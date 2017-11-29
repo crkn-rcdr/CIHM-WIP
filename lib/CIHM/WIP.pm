@@ -14,11 +14,11 @@ CIHM::WIP - The great new CIHM::WIP!
 
 =head1 VERSION
 
-Version 0.02
+Version 0.12
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.12';
 
 
 sub new {

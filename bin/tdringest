@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use Getopt::Long;
-use CIHM::Meta::Ingest;
+use CIHM::WIP::Ingest;
 
 use Fcntl qw(:DEFAULT :flock);
 my $lockfile = '/var/lock/tdr/tdringest';
@@ -30,7 +30,7 @@ GetOptions (
     'timelimit:i' => \$timelimit
     );
 
-CIHM::Meta::Ingest->new({ 
+CIHM::WIP::Ingest->new({ 
     configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
     limit => $limit, timelimit => $timelimit
                         })->ingest;

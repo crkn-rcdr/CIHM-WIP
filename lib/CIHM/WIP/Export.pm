@@ -1,12 +1,13 @@
-package CIHM::Meta::Export;
+package CIHM::WIP::Export;
 
 use strict;
 use Carp;
 use CIHM::WIP;
-use CIHM::Meta::Export::Worker;
+use CIHM::WIP::Export::Worker;
 use Log::Log4perl;
 
 use Coro::Semaphore;
+use AnyEvent::Fork;
 use AnyEvent::Fork::Pool;
 
 use Try::Tiny;
@@ -15,12 +16,12 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Export - Exports AIPs,SIPs or metadata.xml files to directory in WIPbased on database documents in 'wipmeta'
+CIHM::WIP::Export - Exports AIPs,SIPs or metadata.xml files to directory in WIPbased on database documents in 'wipmeta'
 
 
 =head1 SYNOPSIS
 
-    my $export = CIHM::Meta::Export->new($args);
+    my $export = CIHM::WIP::Export->new($args);
       where $args is a hash of arguments.
 
       $args->{configpath} is as defined in CIHM::WIP
@@ -39,7 +40,7 @@ sub new {
     $self->{WIP} = new CIHM::WIP($self->configpath);
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Export");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Export");
 
     $self->{skip}=delete $args->{skip};
 
@@ -118,10 +119,10 @@ sub export {
 
     my $pool = AnyEvent::Fork
         ->new
-        ->require ("CIHM::Meta::Export::Worker")
+        ->require ("CIHM::WIP::Export::Worker")
         ->AnyEvent::Fork::Pool::run 
         (
-         "CIHM::Meta::Export::Worker::export",
+         "CIHM::WIP::Export::Worker::export",
          max        => $self->maxprocs,
          load       => 2,
          on_destroy => ( my $cv_finish = AE::cv ),

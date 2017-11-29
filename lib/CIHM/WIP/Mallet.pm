@@ -1,12 +1,13 @@
-package CIHM::Meta::Mallet;
+package CIHM::WIP::Mallet;
 
 use strict;
 use Carp;
 use CIHM::WIP;
 use Log::Log4perl;
-use CIHM::Meta::Mallet::Worker;
+use CIHM::WIP::Mallet::Worker;
 
 use Coro::Semaphore;
+use AnyEvent::Fork;
 use AnyEvent::Fork::Pool;
 
 use Try::Tiny;
@@ -15,7 +16,7 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Mallet - Creates SIPs with data and data directory specified in 'wipmeta' database documents
+CIHM::WIP::Mallet - Creates SIPs with data and data directory specified in 'wipmeta' database documents
 
 
 =head1 SYNOPSIS
@@ -39,7 +40,7 @@ sub new {
     $self->{WIP} = new CIHM::WIP($self->configpath);
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Mallet");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Mallet");
 
     $self->{skip}=delete $args->{skip};
 
@@ -118,10 +119,10 @@ sub mallet {
 
     my $pool = AnyEvent::Fork
         ->new
-        ->require ("CIHM::Meta::Mallet::Worker")
+        ->require ("CIHM::WIP::Mallet::Worker")
         ->AnyEvent::Fork::Pool::run 
         (
-         "CIHM::Meta::Mallet::Worker::swing",
+         "CIHM::WIP::Mallet::Worker::swing",
          max        => $self->maxprocs,
          load       => 2,
          on_destroy => ( my $cv_finish = AE::cv ),

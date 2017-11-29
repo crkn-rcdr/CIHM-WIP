@@ -1,4 +1,4 @@
-package CIHM::Meta::Ingest::Worker;
+package CIHM::WIP::Ingest::Worker;
 
 use strict;
 use AnyEvent;
@@ -9,7 +9,7 @@ use CIHM::TDR::Repository;
 use CIHM::TDR::REST::wipmeta;
 use CIHM::TDR::REST::tdrepo;
 use CIHM::TDR::ContentServer;
-use CIHM::Meta::Ingest::Process;
+use CIHM::WIP::Ingest::Process;
 use JSON;
 use Data::Dumper;
 use Net::Domain qw(hostname hostfqdn hostdomain domainname);
@@ -175,7 +175,7 @@ sub ingest {
       # Handle and record any errors
       try {
           $status = JSON::true;
-          my $process = new  CIHM::Meta::Ingest::Process(
+          my $process = new  CIHM::WIP::Ingest::Process(
               {
                   aip => $aip,
                   configpath => $configpath,

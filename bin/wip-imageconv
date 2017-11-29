@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use Getopt::Long;
-use CIHM::Meta::Imageconv;
+use CIHM::WIP::Imageconv;
 
 
 use Fcntl qw(:DEFAULT :flock);
@@ -30,7 +30,7 @@ GetOptions (
     'timelimit:i' => \$timelimit
     );
 
-CIHM::Meta::Imageconv->new({ 
+CIHM::WIP::Imageconv->new({ 
     configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
     limit => $limit, timelimit => $timelimit
                         })->imageconv;

@@ -1,3 +1,5 @@
+bin/mallet
+bin/tdringest
 bin/wip
 bin/wip-imageconv
 bin/wip-metsproc
@@ -16,9 +18,20 @@ lib/CIHM/WIP/App/ManipMetadata.pm
 lib/CIHM/WIP/App/Mv.pm
 lib/CIHM/WIP/App/UpdateMetadata.pm
 lib/CIHM/WIP/App/Walk.pm
+lib/CIHM/WIP/Export.pm
+lib/CIHM/WIP/Export/Process.pm
+lib/CIHM/WIP/Export/Worker.pm
+lib/CIHM/WIP/Imageconv.pm
+lib/CIHM/WIP/Imageconv/Process.pm
+lib/CIHM/WIP/Imageconv/Worker.pm
+lib/CIHM/WIP/Ingest.pm
+lib/CIHM/WIP/Ingest/Process.pm
+lib/CIHM/WIP/Ingest/Worker.pm
+lib/CIHM/WIP/Mallet.pm
+lib/CIHM/WIP/Mallet/Process.pm
+lib/CIHM/WIP/Mallet/Worker.pm
 lib/CIHM/WIP/metsproc.pm
 lib/CIHM/WIP/move.pm
-lib/CIHM/WIP/REST/ContentServer.pm
 lib/CIHM/WIP/REST/tdrepo.pm
 lib/CIHM/WIP/REST/wipmeta.pm
 lib/CIHM/WIP/unitize.pm

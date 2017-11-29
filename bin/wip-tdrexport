@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use Getopt::Long;
-use CIHM::Meta::Export;
+use CIHM::WIP::Export;
 
 use Fcntl qw(:DEFAULT :flock);
 my $lockfile = '/var/lock/tdr/wip-tdrexport';
@@ -30,7 +30,7 @@ GetOptions (
     'timelimit:i' => \$timelimit
     );
 
-CIHM::Meta::Export->new({ 
+CIHM::WIP::Export->new({ 
     configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
     limit => $limit, timelimit => $timelimit
                         })->export;

@@ -1,4 +1,4 @@
-package CIHM::Meta::Mallet::Process;
+package CIHM::WIP::Mallet::Process;
 
 use 5.014;
 use strict;
@@ -12,20 +12,20 @@ use Switch;
 use POSIX qw(strftime);
 use Data::Dumper;
 use XML::LibXML;
-use CIHM::Bagit;
-use CIHM::TDR::SIP;
 use BSD::Resource;
+use Archive::BagIt;
+use CIHM::TDR::SIP;
 
 =head1 NAME
 
-CIHM::Meta::Mallet::Process - Handles the processing of individual AIPs for CIHM::Meta::Mallet
+CIHM::WIP::Mallet::Process - Handles the processing of individual AIPs for CIHM::WIP::Mallet
 
 =head1 SYNOPSIS
 
-    my $t_repo = CIHM::TDR::Mallet::Process->new($args);
+    my $t_repo = CIHM::WIP::Mallet::Process->new($args);
       where $args is a hash of arguments.
 
-      $args->{configpath} is as defined in CIHM::TDR::TDRConfig
+      $args->{configpath} is as defined in CIHM::WIP
 
 =cut
 
@@ -520,8 +520,7 @@ sub build_sip {
     }
 
     # Write the Bagit structure and manifest...
-    CIHM::Bagit::write_bagit($sipdir);
-    CIHM::Bagit::manifest_md5($sipdir);
+    Archive::BagIt->make_bag($sipdir);
 
     if ($self->{job}->{validate}) {
         # Use the Trashcan as a temporary directory when validating SIP.

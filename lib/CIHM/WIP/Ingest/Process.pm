@@ -1,4 +1,4 @@
-package CIHM::Meta::Ingest::Process;
+package CIHM::WIP::Ingest::Process;
 
 use 5.014;
 use strict;
@@ -20,7 +20,7 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Ingest::Process - Handles the processing of individual AIPs for CIHM::Meta::Ingest
+CIHM::WIP::Ingest::Process - Handles the processing of individual AIPs for CIHM::WIP::Ingest
 
 =head1 SYNOPSIS
 

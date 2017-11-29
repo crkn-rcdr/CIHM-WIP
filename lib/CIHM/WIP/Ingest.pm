@@ -1,11 +1,11 @@
-package CIHM::Meta::Ingest;
+package CIHM::WIP::Ingest;
 
 use strict;
 use Carp;
 use CIHM::TDR::TDRConfig;
 use CIHM::TDR::Repository;
 use CIHM::TDR::REST::wipmeta;
-use CIHM::Meta::Ingest::Worker;
+use CIHM::WIP::Ingest::Worker;
 
 use Coro::Semaphore;
 use AnyEvent::Fork;
@@ -17,12 +17,12 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Ingest - Ingest SIPs into the TDR file repository based on database documents in 'wipmeta'
+CIHM::WIP::Ingest - Ingest SIPs into an AIP based on database documents in 'wipmeta'
 
 
 =head1 SYNOPSIS
 
-    my $hammer = CIHM::TDR::Ingest->new($args);
+    my $hammer = CIHM::WIP::Ingest->new($args);
       where $args is a hash of arguments.
 
       $args->{configpath} is as defined in CIHM::TDR::TDRConfig
@@ -34,7 +34,7 @@ sub new {
     my $self = bless {}, $class;
 
     if (ref($args) ne "HASH") {
-        die "Argument to CIHM::TDR::Replication->new() not a hash\n";
+        die "Argument to CIHM::WIP::Ingest->new() not a hash\n";
     };
     $self->{args} = $args;
 
@@ -161,10 +161,10 @@ sub ingest {
 
     my $pool = AnyEvent::Fork
         ->new
-        ->require ("CIHM::Meta::Ingest::Worker")
+        ->require ("CIHM::WIP::Ingest::Worker")
         ->AnyEvent::Fork::Pool::run 
         (
-         "CIHM::Meta::Ingest::Worker::ingest",
+         "CIHM::WIP::Ingest::Worker::ingest",
          max        => $self->maxprocs,
          load       => 2,
          on_destroy => ( my $cv_finish = AE::cv ),

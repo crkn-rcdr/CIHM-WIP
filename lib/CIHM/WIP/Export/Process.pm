@@ -1,4 +1,4 @@
-package CIHM::Meta::Export::Process;
+package CIHM::WIP::Export::Process;
 
 use 5.014;
 use strict;
@@ -15,11 +15,11 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Export::Process - Handles the processing of individual AIPs for CIHM::Meta::Ingest
+CIHM::WIP::Export::Process - Handles the processing of individual AIPs for CIHM::WIP::Export
 
 =head1 SYNOPSIS
 
-    my $t_repo = CIHM::TDR::Ingest::Process->new($args);
+    my $t_repo = CIHM::WIP::Export::Process->new($args);
       where $args is a hash of arguments.
 
       $args->{configpath} is as defined in CIHM::TDR::TDRConfig

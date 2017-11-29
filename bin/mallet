@@ -5,7 +5,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../lib";
 use Getopt::Long;
-use CIHM::Meta::Mallet;
+use CIHM::WIP::Mallet;
 
 use Fcntl qw(:DEFAULT :flock);
 my $lockfile = '/var/lock/tdr/mallet';
@@ -29,7 +29,7 @@ GetOptions (
     'timelimit:i' => \$timelimit
     );
 
-CIHM::Meta::Mallet->new({ 
+CIHM::WIP::Mallet->new({ 
     configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
     limit => $limit, timelimit => $timelimit
                         })->mallet;

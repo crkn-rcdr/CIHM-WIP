@@ -1,10 +1,10 @@
-package CIHM::Meta::Export::Worker;
+package CIHM::WIP::Export::Worker;
 
 use strict;
 use AnyEvent;
 use Try::Tiny;
 use CIHM::WIP;
-use CIHM::Meta::Export::Process;
+use CIHM::WIP::Export::Process;
 use CIHM::TDR::ContentServer;
 use JSON;
 use Data::Dumper;
@@ -28,7 +28,7 @@ sub initworker {
     }
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Export");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Export");
 
     $self->{cserver} = new CIHM::TDR::ContentServer($configpath);
     if (!$self->cserver) {
@@ -115,7 +115,7 @@ sub export {
   # Handle and record any errors
   try {
       $status = JSON::true;
-      my $process = new  CIHM::Meta::Export::Process(
+      my $process = new  CIHM::WIP::Export::Process(
           {
               aip => $aip,
               configpath => $configpath,

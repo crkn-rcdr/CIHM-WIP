@@ -1,4 +1,4 @@
-package CIHM::Meta::Imageconv::Process;
+package CIHM::WIP::Imageconv::Process;
 
 use 5.014;
 use strict;
@@ -14,14 +14,14 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Imageconv::Process - Handles the processing of individual AIPs for image conversion.
+CIHM::WIP::Imageconv::Process - Handles conversion of images in WIP directories.
 
 =head1 SYNOPSIS
 
-    my $t_repo = CIHM::Meta::Imageconv::Process->new($args);
+    my $t_repo = CIHM::WIP::Imageconv::Process->new($args);
       where $args is a hash of arguments.
 
-      $args->{configpath} is as defined in CIHM::TDR::TDRConfig
+      $args->{configpath} is as defined in CIHM::WIP
 
 =cut
 
@@ -31,7 +31,7 @@ sub new {
     my $self = bless {}, $class;
 
     if (ref($args) ne "HASH") {
-        die "Argument to CIHM::Meta::Imageconv::Process->new() not a hash\n";
+        die "Argument to CIHM::WIP::Imageconv::Process->new() not a hash\n";
     };
     $self->{args} = $args;
 

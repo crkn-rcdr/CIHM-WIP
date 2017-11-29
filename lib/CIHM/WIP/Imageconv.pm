@@ -1,12 +1,13 @@
-package CIHM::Meta::Imageconv;
+package CIHM::WIP::Imageconv;
 
 use strict;
 use Carp;
 use CIHM::WIP;
-use CIHM::Meta::Imageconv::Worker;
+use CIHM::WIP::Imageconv::Worker;
 use Log::Log4perl;
 
 use Coro::Semaphore;
+use AnyEvent::Fork;
 use AnyEvent::Fork::Pool;
 
 use Try::Tiny;
@@ -15,12 +16,12 @@ use Data::Dumper;
 
 =head1 NAME
 
-CIHM::Meta::Imageconv - Converts images stored in WIP based on database documents in 'wipmeta'
+CIHM::WIP::Imageconv - Converts images stored in WIP based on database documents in 'wipmeta'
 
 
 =head1 SYNOPSIS
 
-    my $imageconv = CIHM::Meta::Imageconv->new($args);
+    my $imageconv = CIHM::WIP::Imageconv->new($args);
       where $args is a hash of arguments.
 
       $args->{configpath} is as defined in CIHM::WIP
@@ -32,14 +33,14 @@ sub new {
     my $self = bless {}, $class;
 
     if (ref($args) ne "HASH") {
-        die "Argument to CIHM::TDR::Replication->new() not a hash\n";
+        die "Argument to CIHM::WIP::Imageconv->new() not a hash\n";
     };
     $self->{args} = $args;
 
     $self->{WIP} = new CIHM::WIP($self->configpath);
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Imageconv");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Imageconv");
 
     $self->{skip}=delete $args->{skip};
 
@@ -118,10 +119,10 @@ sub imageconv {
 
     my $pool = AnyEvent::Fork
         ->new
-        ->require ("CIHM::Meta::Imageconv::Worker")
+        ->require ("CIHM::WIP::Imageconv::Worker")
         ->AnyEvent::Fork::Pool::run 
         (
-         "CIHM::Meta::Imageconv::Worker::imageconv",
+         "CIHM::WIP::Imageconv::Worker::imageconv",
          max        => $self->maxprocs,
          load       => 2,
          on_destroy => ( my $cv_finish = AE::cv ),

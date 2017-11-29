@@ -1,11 +1,10 @@
-package CIHM::Meta::Imageconv::Worker;
+package CIHM::WIP::Imageconv::Worker;
 
 use strict;
 use AnyEvent;
 use Try::Tiny;
 use CIHM::WIP;
-use CIHM::Meta::Imageconv::Process;
-use CIHM::WIP::REST::ContentServer;
+use CIHM::WIP::Imageconv::Process;
 use JSON;
 use Data::Dumper;
 use Log::Log4perl;
@@ -28,7 +27,7 @@ sub initworker {
     }
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
-    $self->{logger} = Log::Log4perl::get_logger("CIHM::Meta::Imageconv");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Imageconv");
 
 }
 
@@ -105,7 +104,7 @@ sub imageconv {
   # Handle and record any errors
   try {
       $status = JSON::true;
-      new  CIHM::Meta::Imageconv::Process(
+      new  CIHM::WIP::Imageconv::Process(
           {
               aip => $aip,
               configpath => $configpath,
