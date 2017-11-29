@@ -12,6 +12,7 @@ use File::Path qw(make_path remove_tree);
 use File::Copy;
 use JSON;
 use Archive::BagIt::Fast;
+use Archive::BagIt;
 use Switch;
 use POSIX qw(strftime);
 
@@ -210,8 +211,7 @@ sub process {
             $self->checkdup($aipdir);
 
             # Update the SIP bagit info
-            CIHM::Bagit::write_bagit("$aipdir/data/sip");
-            CIHM::Bagit::manifest_md5("$aipdir/data/sip");
+            Archive::BagIt->make_bag("$aipdir/data/sip");
 
             $self->tdr->changelog($aipdir, "Updated metadata record; old record stored in revision $revision_name");
             $self->log->info($self->aip.": Updated metadata record in $aipdir; old record stored in revision $revision_name");
@@ -233,7 +233,7 @@ sub process {
     $self->log->info($self->aip.": Changelog: ". $self->ingestReq->{'changelog'});
 
     # Generate BagIt information files for the AIP
-    $self->tdr->write_bagit($aipdir);
+    Archive::BagIt->make_bag($aipdir);
 
     # Get basic information about AIP
     my $ingestdoc = $self->repo->get_manifestinfo($aipdir);
