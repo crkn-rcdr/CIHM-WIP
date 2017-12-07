@@ -26,10 +26,12 @@ sub initworker {
     if (! ($self->{WIP} = CIHM::WIP->new($configpath))) {
         die "Wasn't able to build CIHM::WIP object\n";
     }
-    $self->{cserver} = new CIHM::TDR::REST::ContentServer(
-        {
-            conf => $configpath
-        });
+
+    my %cosargs = (
+        jwt_payload => '{"uids":[".*"]}',
+        conf => $configpath
+        );
+    $self->{cserver} = new CIHM::TDR::REST::ContentServer(\%cosargs);
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
     $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Mallet");

@@ -8,7 +8,7 @@ WriteMakefile(
     AUTHOR           => q{Russell McOrmond <russell.mcormond@canadiana.ca>},
     VERSION_FROM     => 'lib/CIHM/WIP.pm',
     ABSTRACT_FROM    => 'lib/CIHM/WIP.pm',
-    LICENSE          => 'Artistic_2_0',
+    LICENSE          => 'Artistic_2',
     PL_FILES         => {},
     "EXE_FILES"      => [
 	"bin/wip", "bin/wip-imageconv", "bin/wip-metsproc", "bin/wip-move", "bin/wip-tdrexport", "bin/wip-unitize", "bin/mallet", "bin/tdringest"
