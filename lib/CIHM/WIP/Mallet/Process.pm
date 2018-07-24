@@ -796,6 +796,8 @@ sub manip_md {
         my $dmdid=$structMap->getAttribute('DMDID');
         my $mdtype = add_dmdsec($doc,$mets,$dmd_doc, $dmdid,1);
         $self->check_item_dmdsec($mdtype);
+        $structMap->setAttribute('TYPE', $self->myconfig->{type});
+        $self->log->info($self->aip.": updated dmdSec(".$mdtype.") for TYPE=\"".$self->myconfig->{type}."\"");
     }
 
     # Upload to Couch
