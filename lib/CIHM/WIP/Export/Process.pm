@@ -204,12 +204,12 @@ sub export {
                $rsyncdest .= "/.";
            }
        }
-       case "metadata"  {
+       case /^(METS|dmdSec)$/  {
            $rsyncsource=$aipinfo->{rsyncpath}."/data/sip/data/metadata.xml";
            if ($isfs) {
-               $rsyncdest=$destdir."/metadata.xml";
+               $rsyncdest=$destdir."/METS.xml";
            } else {
-               $rsyncdest=$destdir."/$aip-metadata.xml";
+               $rsyncdest=$destdir."/$aip-METS.xml";
            }
            if (-e $rsyncdest) {
                die $rsyncdest." already exists.\n";
