@@ -9,9 +9,8 @@ use File::Copy;
 use JSON;
 use Switch;
 use POSIX qw(strftime);
+use CIHM::WIP::Export::ExtractDmd;
 
-
-use Data::Dumper;
 
 =head1 NAME
 
@@ -207,9 +206,9 @@ sub export {
        case /^(METS|dmdSec)$/  {
            $rsyncsource=$aipinfo->{rsyncpath}."/data/sip/data/metadata.xml";
            if ($isfs) {
-               $rsyncdest=$destdir."/METS.xml";
+               $rsyncdest=$destdir."/".$exportReq->{type}.".xml";
            } else {
-               $rsyncdest=$destdir."/$aip-METS.xml";
+               $rsyncdest=$destdir."/$aip-".$exportReq->{type}.".xml";
            }
            if (-e $rsyncdest) {
                die $rsyncdest." already exists.\n";
@@ -221,6 +220,14 @@ sub export {
     }
     $self->rsync($rsyncsource,$rsyncdest);
     $self->log->info("$aip: Completed rsync(\"$rsyncsource\" , \"$rsyncdest\")");
+    
+    if ($exportReq->{type} eq 'dmdSec') {
+	my $newdest=$rsyncdest;
+	$newdest =~ s/-dmdSec\.xml//;
+	CIHM::WIP::Export::ExtractDmd::extract($rsyncdest,$newdest);
+	unlink $rsyncdest or warn "Could not unlink $rsyncdest: $!\n";
+    }
+
     return $exportdoc;
 }
 
