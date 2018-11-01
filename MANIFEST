@@ -7,6 +7,7 @@ bin/wip-move
 bin/wip-tdrexport
 bin/wip-unitize
 Changes
+HISTORY.md
 ignore.txt
 lib/CIHM/WIP.pm
 lib/CIHM/WIP/App.pm
@@ -19,6 +20,7 @@ lib/CIHM/WIP/App/Mv.pm
 lib/CIHM/WIP/App/UpdateMetadata.pm
 lib/CIHM/WIP/App/Walk.pm
 lib/CIHM/WIP/Export.pm
+lib/CIHM/WIP/Export/ExtractDmd.pm
 lib/CIHM/WIP/Export/Process.pm
 lib/CIHM/WIP/Export/Worker.pm
 lib/CIHM/WIP/Imageconv.pm
