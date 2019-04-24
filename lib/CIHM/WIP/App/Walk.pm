@@ -6,6 +6,7 @@ use MooseX::App::Command;
 use CIHM::WIP;
 use File::Spec;
 use JSON;
+use Filesys::DfPortable;
 
 use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
@@ -26,7 +27,7 @@ option 'report' => (
 );
 
 
-command_short_description 'Walks specific WIP directories to find errors in structure, as well as new or removed directories';
+command_short_description 'Walks specific packaging directories to find errors in structure, as well as new or removed directories';
 
 our $self;
 
@@ -363,7 +364,7 @@ sub gen_report {
         die "_view/filesystem GET return code: " . $res->code ." (".$res->response->content.")\n";
     }
     if (scalar(@{$res->data->{rows}})) {
-        $report .= "\n\nWork In Progress found in the following stage/configurations:\n\n";
+        $report .= "\n\nPackaging scan found in the following stage/configurations:\n\n";
 
         foreach my $row (@{$res->data->{rows}}) {
             next if (!($row->{key}[1]) || $row->{key}[1] eq ''); # skip if stage='' for deleted files
@@ -373,6 +374,23 @@ sub gen_report {
             $report .= " * $wipdir ($count)\n";
         }
     }
+
+    #
+    # Get Disk Free
+    #
+    $report .= "\n\nPackaging disk usage:\n\n";
+
+    my $wippath = $self->WIP->wipconfig->{wipdir};
+    my $ref = dfportable($wippath);
+
+    my $totalh = formatSize($ref->{blocks});
+    $report .= "Total: $totalh ($ref->{blocks} bytes)\n";
+
+    my $freeh = formatSize($ref->{bfree});
+    $report .= "Free: $freeh ($ref->{bfree} bytes)\n";
+
+    my $usedh = formatSize($ref->{bused});
+    $report .= "Used: $usedh ($ref->{bused} bytes) = $ref->{per}%\n\n";
 
 
     #
@@ -431,9 +449,9 @@ sub gen_report {
     } else {
         my $message = Email::MIME->create(
             header_str => [
-                From    => '"Canadiana WIP Reporter" <noreply@canadiana.ca>',
+                From    => '"Canadiana OAIS Packaging Reporter" <noreply@canadiana.ca>',
                 To      => $self->report,
-                Subject => 'Canadiana WIP report',
+                Subject => 'Canadiana OAIS Packaging report',
             ],
             attributes => {
                 encoding => 'quoted-printable',

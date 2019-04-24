@@ -15,7 +15,7 @@ use Email::Sender::Simple qw(sendmail);
 
 =head1 NAME
 
-CIHM::WIP::unitize - Rearrange files within WIP filesystem to match "WIP Object directory" structure.
+CIHM::WIP::unitize - Rearrange files within filesystem to match "OAIS packaging Object directory" structure.
 
 
 =head1 SYNOPSIS
@@ -116,7 +116,7 @@ sub run {
                                   });
             $self->gen_report({
                 email => $config->{email},
-                subject => 'Canadiana WIP Unitize report for: lac_reel_ocr'
+                subject => 'Canadiana OAIS packaging Unitize report for: lac_reel_ocr'
                               });
         } else {
             $self->log->warn("$base not directory, but indicated as 'lac_reel_ocr'");
@@ -146,7 +146,7 @@ sub run {
                                   });
             $self->gen_report({
                 email => $config->{email},
-                subject => 'Canadiana WIP Unitize report for: lac_reel_ftp'
+                subject => 'Canadiana OAIS packaging Unitize report for: lac_reel_ftp'
                               });
         } else {
             $self->log->warn("$base not directory, but indicated as 'lac_reel_ftp'");
@@ -176,7 +176,7 @@ sub run {
                                   });
             $self->gen_report({
                 email => $config->{email},
-                subject => 'Canadiana WIP Unitize report for: oop_ocr'
+                subject => 'Canadiana OAIS packaging Unitize report for: oop_ocr'
                               });
         } else {
             $self->log->warn("$base not directory, but indicated as 'oop_ocr'");
@@ -216,7 +216,7 @@ sub gen_report {
         my $email = $params->{email};
         my $subject = $params->{subject};
         if (!$subject) {
-            $subject='Canadiana WIP Unitize report';
+            $subject='Canadiana OAIS packaging Unitize report';
         }
             # Email or output to screen the report
         if (index($email,"@") == -1) {
@@ -224,7 +224,7 @@ sub gen_report {
         } else {
             my $message = Email::MIME->create(
                 header_str => [
-                    From    => '"Canadiana WIP Unitize Reporter" <noreply@canadiana.ca>',
+                    From    => '"Canadiana OAIS packaging Unitize Reporter" <noreply@canadiana.ca>',
                     To      => $email,
                     Subject => $subject,
                 ],
