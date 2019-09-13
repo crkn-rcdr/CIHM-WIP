@@ -144,7 +144,7 @@ sub run {
             $self->gen_report({
 #                email => "out",
                 email => $config->{email},
-                subject => 'Canadiana WIP Metadata Process report'
+                subject => 'Canadiana Metadata Process report'
                               });
 
         } else {
@@ -177,7 +177,7 @@ sub gen_report {
         my $email = $params->{email};
         my $subject = $params->{subject};
         if (!$subject) {
-            $subject='Canadiana WIP METSproc report';
+            $subject='Canadiana METSproc report';
         }
             # Email or output to screen the report
         if (index($email,"@") == -1) {
@@ -185,7 +185,7 @@ sub gen_report {
         } else {
             my $message = Email::MIME->create(
                 header_str => [
-                    From    => '"Canadiana WIP METSproc Reporter" <noreply@canadiana.ca>',
+                    From    => '"Canadiana METSproc Reporter" <noreply@canadiana.ca>',
                     To      => $email,
                     Subject => $subject,
                 ],
