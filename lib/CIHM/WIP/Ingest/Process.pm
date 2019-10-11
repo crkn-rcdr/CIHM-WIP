@@ -2,10 +2,6 @@ package CIHM::WIP::Ingest::Process;
 
 use 5.014;
 use strict;
-use CIHM::TDR::TDRConfig;
-use CIHM::TDR::Repository;
-use CIHM::TDR::REST::wipmeta;
-use CIHM::TDR::REST::tdrepo;
 use Try::Tiny;
 use File::Spec;
 use File::Path qw(make_path remove_tree);
@@ -42,8 +38,8 @@ sub new {
     };
     $self->{args} = $args;
 
-    if (!$self->config) {
-        die "TDRConfig object parameter is mandatory\n";
+    if (!$self->log) {
+        die "Log::Log4perl::get_logger object parameter is mandatory\n";
     }
     if (!$self->tdr) {
         die "CIHM::TDR instance parameter is mandatory\n";
@@ -106,13 +102,9 @@ sub configpath {
     my $self = shift;
     return $self->args->{configpath};
 }
-sub config {
-    my $self = shift;
-    return $self->args->{config};
-}
 sub log {
     my $self = shift;
-    return $self->config->logger;
+    return $self->args->log;
 }
 sub wipmeta {
     my $self = shift;
@@ -125,6 +117,10 @@ sub tdr {
 sub cserver {
     my $self = shift;
     return $self->args->{cserver};
+}
+sub swift {
+    my $self = shift;
+    return $self->args->{swift};
 }
 sub repo {
     my $self = shift;
@@ -312,42 +308,33 @@ sub ingest_setup {
             die "Type is new, but ".$self->aip." already exists in tdrepo\n";
         }
 
-        my @rrepos = $self->cserver->replication_repositories();
-        my $copyrepo;
-        # Loop though repos we would be willing to sync from
-      REPOL: foreach my $fromrepo (@rrepos) {
-          foreach my $thisrepo (@{$self->aiprepos}) {
-              if ($thisrepo eq $fromrepo) {
-                  $copyrepo=$thisrepo;
-                  last REPOL;
-              }
-          }
-      }
-        if (!$copyrepo) {
-            die ("Couldn't find repo to copy ".$self->aip."\n")
-        }
-        my $aipinfo=$self->cserver->get_aipinfo($self->aip,$copyrepo);
-        if (!$aipinfo) {
-            die "Couldn't get AIP information from $copyrepo\n";
+	my %findswift = map { $_ -> 1 } @{$self->aiprepos};
+	if (! exists($findswift{$swift->repository})) {
+            die $self->aip." not found in Swift repository=".$swift->repository."\n";
         }
 
-        if (defined $aipinfo->{rsyncpath}) {
-            mkdir $aipdir;
-            $self->rsync($aipinfo->{rsyncpath}."/.",$aipdir."/.");
+	mkdir $aipdir;
 
-            my $verified;
-            try {
-                my $bagit = new Archive::BagIt::Fast($aipdir);
-                my $valid = $bagit->verify_bag();
-                $verified = $valid;
-            };
-            if (!$verified) {
-                # Bag wasn't valid.
-                die "Error verifying bag: $aipdir\n";
-            }
-        } else {
-            die "rsync path not defined in aipinfo on $copyrepo\n";
-        }
+	# Try to copy 3 times before giving up.
+	my $success=0;
+	for (my $tries=3 ; ($tries > 0) && ! $success ; $tries --) {
+	    try {
+		$self->swift->bag_download($self->aip,$aipdir);
+		$success=1;
+	    };
+	}
+	die "Error downloading from Swift\n" if (! $success);
+
+	my $verified;
+	try {
+	    my $bagit = new Archive::BagIt::Fast($aipdir);
+	    my $valid = $bagit->verify_bag();
+	    $verified = $valid;
+	};
+	if (!$verified) {
+	    # Bag wasn't valid.
+	    die "Error verifying bag: $aipdir\n";
+	}
     } else {
         if ($self->ingesttype ne 'new' ) {
             die "Type is ".$self->ingesttype.", but ".$self->aip." doesn't exists in tdrepo\n";

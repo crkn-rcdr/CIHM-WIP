@@ -2,7 +2,7 @@ package CIHM::WIP::Ingest;
 
 use strict;
 use Carp;
-use CIHM::TDR::TDRConfig;
+use Config::General;
 use CIHM::TDR::Repository;
 use CIHM::TDR::REST::wipmeta;
 use CIHM::WIP::Ingest::Worker;
@@ -38,11 +38,12 @@ sub new {
     };
     $self->{args} = $args;
 
-    $self->{config} = CIHM::TDR::TDRConfig->instance($self->configpath);
-    $self->{logger} = $self->{config}->logger;
+    Log::Log4perl->init_once("/etc/canadiana/tdr/log4perl.conf");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::TDR");
 
-
-    $self->{skip}=delete $args->{skip};
+    my %confighash = new Config::General(
+        -ConfigFile => $args->{configpath},
+        )->getall;
 
     $self->{maxprocs}=delete $args->{maxprocs};
     if (! $self->{maxprocs}) {
@@ -64,10 +65,6 @@ sub new {
     if (! $self->{limit}) {
         $self->{limit} = ($self->{maxprocs})*2+1
     }
-
-    # Confirm there is a named repository block in the config
-    my %confighash = %{$self->{config}->get_conf};
-
 
     # Undefined if no <ingest> config block
     if (exists $confighash{ingest}) {

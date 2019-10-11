@@ -3,8 +3,9 @@ package CIHM::WIP::Ingest::Worker;
 use strict;
 use AnyEvent;
 use Try::Tiny;
+use Config::General;
 use CIHM::TDR;
-use CIHM::TDR::TDRConfig;
+use CIHM::TDR::Swift;
 use CIHM::TDR::Repository;
 use CIHM::TDR::REST::wipmeta;
 use CIHM::TDR::REST::tdrepo;
@@ -33,15 +34,16 @@ sub initworker {
         die "Wasn't able to build Repository object\n";
     }
 
-    $self->{config} = CIHM::TDR::TDRConfig->instance($configpath);
-    $self->{logger} = $self->{config}->logger;
+    Log::Log4perl->init_once("/etc/canadiana/tdr/log4perl.conf");
+    $self->{logger} = Log::Log4perl::get_logger("CIHM::TDR");
+
+    my %confighash = new Config::General(
+        -ConfigFile => $args->{configpath},
+        )->getall;
 
     if (! $self->repo->tdrepo) {
         die "Missing <tdrepo> configuration\n";
     }
-
-    # Confirm there is a named repository block in the config
-    my %confighash = %{$self->{config}->get_conf};
 
     # So far we only need a few options (existance checked earlier)
     $self->{tempdir} = $confighash{ingest}{tempdir};
@@ -71,6 +73,13 @@ sub initworker {
     if (!$self->{cserver}) {
         die "Missing ContentServer configuration.\n";
     }
+
+    $self->{swift} = new CIHM::TDR::Swift({
+	configpath => $configpath
+					  });
+    if (!$self->{swift}) {
+        die "Missing Swift configuration.\n";
+    }
 }
 
 
@@ -94,6 +103,10 @@ sub tdr {
 sub cserver {
     my $self = shift;
     return $self->{cserver};
+}
+sub swift {
+    my $self = shift;
+    return $self->{swift};
 }
 sub repo {
     my $self = shift;
@@ -179,10 +192,11 @@ sub ingest {
               {
                   aip => $aip,
                   configpath => $configpath,
-                  config => $self->config,
+                  log => $self->log,
                   tdr => $self->tdr,
                   wipmeta => $self->wipmeta,
                   cserver => $self->cserver,
+		  swift => $self->swift,
                   repo => $self->repo,
                   hostname => $self->hostname,
                   tempdir => $self->tempdir,
