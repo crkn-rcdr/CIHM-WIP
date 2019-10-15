@@ -47,8 +47,8 @@ sub new {
     if (!$self->wipmeta) {
         die "wipmeta object parameter is mandatory\n";
     }
-    if (!$self->cserver) {
-        die "cserver object parameter is mandatory\n";
+    if (!$self->swift) {
+        die "swift object parameter is mandatory\n";
     }
     if (!$self->repo) {
         die "repo object parameter is mandatory\n";
@@ -58,9 +58,6 @@ sub new {
     }
     if (!$self->tempdir) {
         die "Parameter 'tempdir' is mandatory\n";
-    }
-    if (!$self->outbox) {
-        die "Parameter 'outbox' is mandatory\n";
     }
     if (!$self->stages) {
         die "Parameter 'stages' is mandatory\n";
@@ -104,7 +101,7 @@ sub configpath {
 }
 sub log {
     my $self = shift;
-    return $self->args->log;
+    return $self->args->{log};
 }
 sub wipmeta {
     my $self = shift;
@@ -113,10 +110,6 @@ sub wipmeta {
 sub tdr {
     my $self = shift;
     return $self->args->{tdr};
-}
-sub cserver {
-    my $self = shift;
-    return $self->args->{cserver};
 }
 sub swift {
     my $self = shift;
@@ -128,7 +121,7 @@ sub repo {
 }
 sub tdrepo {
     my $self = shift;
-    return $self->repo->tdrepo;
+    return $self->swift->tdrepo;
 }
 sub hostname {
     my $self = shift;
@@ -137,10 +130,6 @@ sub hostname {
 sub tempdir {
     my $self = shift;
     return $self->args->{tempdir};
-}
-sub outbox {
-    my $self = shift;
-    return $self->args->{outbox};
 }
 sub stages {
     my $self = shift;
@@ -234,11 +223,28 @@ sub process {
     # Get basic information about AIP
     my $ingestdoc = $self->repo->get_manifestinfo($aipdir);
 
-    # rsync to incoming of TDR file repository..
-    my $destdir = $self->outbox."/".$self->aip;
-    $self->rsync($aipdir."/.",$destdir);
+    # Try to copy 3 times before giving up.
+    my $success=0;
+    for (my $tries=3 ; ($tries > 0) && ! $success ; $tries --) {
+	try {
+	    $self->swift->bag_upload($aipdir,$self->aip);
+	    $success=1;
+	};
+    }
+    die "Failure while uploading ".$self->aip." to $aipdir\n" if (!$success);
 
-    $self->log->info($self->aip.": rsync $aipdir $destdir");
+    $self->log->info($self->aip.": Swift copy of $aipdir");
+
+    my $validate = $self->swift->validateaip($self->aip);
+
+    if ($validate->{'validate'}) {
+	$self->tdrepo->update_item_repository($self->aip, {
+	    'manifest date' => $validate->{'manifest date'},
+		'manifest md5' => $validate->{'manifest md5'}
+					      });
+    } else {
+	die("validation of ".$self->aip." failed");
+    }
 
     # Remove temporary AIP build directory
     remove_tree($aipdir) or die("Failed to remove $aipdir: $!");
@@ -308,9 +314,9 @@ sub ingest_setup {
             die "Type is new, but ".$self->aip." already exists in tdrepo\n";
         }
 
-	my %findswift = map { $_ -> 1 } @{$self->aiprepos};
-	if (! exists($findswift{$swift->repository})) {
-            die $self->aip." not found in Swift repository=".$swift->repository."\n";
+	my %findswift = map { $_ => 1 } @{$self->aiprepos};
+	if (! exists($findswift{$self->swift->repository})) {
+            die $self->aip." not found in Swift repository=".$self->swift->repository."\n";
         }
 
 	mkdir $aipdir;

@@ -38,7 +38,7 @@ sub initworker {
     $self->{logger} = Log::Log4perl::get_logger("CIHM::TDR");
 
     my %confighash = new Config::General(
-        -ConfigFile => $args->{configpath},
+        -ConfigFile => $configpath,
         )->getall;
 
     if (! $self->repo->tdrepo) {
@@ -47,8 +47,6 @@ sub initworker {
 
     # So far we only need a few options (existance checked earlier)
     $self->{tempdir} = $confighash{ingest}{tempdir};
-    $self->{outbox} = $confighash{ingest}{outbox};
-    $self->{outbox} =~ s|/+$||; # trim any trailing slash
     if (exists $confighash{stages} &&
         ref($confighash{stages}) eq "HASH") {
         $self->{stages} = $confighash{stages};
@@ -100,10 +98,6 @@ sub tdr {
     my $self = shift;
     return $self->{tdr};
 }
-sub cserver {
-    my $self = shift;
-    return $self->{cserver};
-}
 sub swift {
     my $self = shift;
     return $self->{swift};
@@ -119,10 +113,6 @@ sub hostname {
 sub tempdir {
     my $self = shift;
     return $self->{tempdir};
-}
-sub outbox {
-    my $self = shift;
-    return $self->{outbox};
 }
 sub stages {
     my $self = shift;
@@ -195,12 +185,10 @@ sub ingest {
                   log => $self->log,
                   tdr => $self->tdr,
                   wipmeta => $self->wipmeta,
-                  cserver => $self->cserver,
 		  swift => $self->swift,
                   repo => $self->repo,
                   hostname => $self->hostname,
                   tempdir => $self->tempdir,
-                  outbox => $self->outbox,
                   stages => $self->stages
               });
           $processdoc = $process->process;
