@@ -5,7 +5,7 @@ use AnyEvent;
 use Try::Tiny;
 use CIHM::WIP;
 use CIHM::WIP::Export::Process;
-use CIHM::TDR::ContentServer;
+use CIHM::TDR::Swift;
 use JSON;
 use Data::Dumper;
 use Log::Log4perl;
@@ -30,9 +30,11 @@ sub initworker {
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
     $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Export");
 
-    $self->{cserver} = new CIHM::TDR::ContentServer($configpath);
-    if (!$self->cserver) {
-        die "Missing ContentServer configuration in $configpath.\n";
+    $self->{swift} = new CIHM::TDR::Swift({
+	configpath => $configpath
+					  });
+    if (!$self->swift) {
+        die "Missing Swift configuration in $configpath.\n";
     }
 }
 
@@ -50,9 +52,9 @@ sub wipmeta {
     my $self = shift;
     return $self->WIP->wipmeta;
 }
-sub cserver {
+sub swift {
     my $self = shift;
-    return $self->{cserver};
+    return $self->{swift};
 }
 sub hostname {
     my $self = shift;
@@ -121,7 +123,7 @@ sub export {
               configpath => $configpath,
               WIP => $self->WIP,
               log => $self->log,
-              cserver => $self->cserver,
+              swift => $self->swift,
           });
       $processdoc = $process->export;
   } catch {

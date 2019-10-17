@@ -10,7 +10,8 @@ use JSON;
 use Switch;
 use POSIX qw(strftime);
 use CIHM::WIP::Export::ExtractDmd;
-
+use DateTime::Format::ISO8601;
+use Archive::BagIt::Fast;
 
 =head1 NAME
 
@@ -41,8 +42,8 @@ sub new {
     if (!$self->WIP) {
         die "CIHM::WIP instance parameter is mandatory\n";
     }
-    if (!$self->cserver) {
-        die "cserver object parameter is mandatory\n";
+    if (!$self->swift) {
+        die "CIHM::TDR::Swift instance parameter is mandatory\n";
     }
     if (!$self->log) {
         die "log object parameter is mandatory\n";
@@ -79,9 +80,9 @@ sub wipmeta {
     my $self = shift;
     return $self->WIP->{wipmeta};
 }
-sub cserver {
+sub swift {
     my $self = shift;
-    return $self->args->{cserver};
+    return $self->args->{swift};
 }
 sub configdocs {
     my $self = shift;
@@ -98,23 +99,6 @@ sub export {
 
     $self->log->info("$aip: Accepted job. exportReq = ". encode_json($exportReq));
     $exportdoc->{'exportReq'}=$exportReq;
-
-    my $aipinfo;
-    # Find first configured repository which has the relevant AIP.
-    # Doesn't check if latest version, and assumes user won't try to 
-    # export immediately after import.
-    my @rrepos = $self->cserver->replication_repositories();
-    foreach my $repo (@rrepos) {
-        $aipinfo=$self->cserver->get_aipinfo($aip,$repo);
-        if (exists $aipinfo->{rsyncpath}) {
-            last;
-        } else {
-            undef $aipinfo;
-        }
-    }
-    if (!$aipinfo) {
-        die "Couldn't get rsync path information for $aip\n";
-    }
 
     my $isfs=exists $exportReq->{fs}; 
     my $destdir;
@@ -170,93 +154,108 @@ sub export {
         }
     }
 
-    my $rsyncsource;
-    my $rsyncdest;
+    my $swiftbag;
+    my $swiftfile;
+    my $swiftdest;
     switch ($exportReq->{type}) {
        case "aip"  {
-           $rsyncsource=$aipinfo->{rsyncpath}."/.";
+           $swiftbag=$self->aip;
            if ($isfs) {
-               $rsyncdest=$destdir."/aip";
+               $swiftdest=$destdir."/aip";
            } else {
-               $rsyncdest=$destdir."/$aip-aip";
-           }
-           if (-e $rsyncdest) {
-               die $rsyncdest." already exists.\n";
-           } else {
-               mkdir $rsyncdest 
-                    || die "Could not mkdir $rsyncdest: $!\n";
-               $rsyncdest .= "/.";
+               $swiftdest=$destdir."/$aip-aip";
            }
        }
        case "sip"  {
-           $rsyncsource=$aipinfo->{rsyncpath}."/data/sip/.";
+           $swiftbag=$self->aip."/data/sip/";
            if ($isfs) {
-               $rsyncdest=$destdir."/sip";
+               $swiftdest=$destdir."/sip";
            } else {
-               $rsyncdest=$destdir."/$aip-sip";
-           }
-           if (-e $rsyncdest) {
-               die $rsyncdest." already exists.\n";
-           } else {
-               mkdir $rsyncdest 
-                    || die "Could not mkdir $rsyncdest: $!\n";
-               $rsyncdest .= "/.";
+               $swiftdest=$destdir."/$aip-sip";
            }
        }
        case /^(METS|dmdSec)$/  {
-           $rsyncsource=$aipinfo->{rsyncpath}."/data/sip/data/metadata.xml";
+           $swiftfile=$self->aip."/data/sip/data/metadata.xml";
            if ($isfs) {
-               $rsyncdest=$destdir."/".$exportReq->{type}.".xml";
+               $swiftdest=$destdir."/".$exportReq->{type}.".xml";
            } else {
-               $rsyncdest=$destdir."/$aip-".$exportReq->{type}.".xml";
-           }
-           if (-e $rsyncdest) {
-               die $rsyncdest." already exists.\n";
+               $swiftdest=$destdir."/$aip-".$exportReq->{type}.".xml";
            }
        }
        else {
            die "Unknown export type:".$exportReq->{type}."\n";
        }
     }
-    $self->rsync($rsyncsource,$rsyncdest);
-    $self->log->info("$aip: Completed rsync(\"$rsyncsource\" , \"$rsyncdest\")");
-    
+    if (-e $swiftdest) {
+	die $swiftdest." already exists.\n";
+    }
+    print Dumper ($swiftbag, $swiftfile, $swiftdest);
+    if (defined $swiftbag) {
+	# Copy an entire Bagit
+	mkdir $swiftdest
+	    || die "Could not mkdir $swiftdest: $!\n";
+
+	# Try to copy 3 times before giving up.
+	my $success=0;
+	for (my $tries=3 ; ($tries > 0) && ! $success ; $tries --) {
+	    try {
+		$self->swift->bag_download($swiftbag,$swiftdest);
+		$success=1;
+	    };
+	}
+	die "Error downloading $swiftbag from Swift\n" if (! $success);
+	my $verified;
+	try {
+	    my $bagit = new Archive::BagIt::Fast($swiftdest);
+	    my $valid = $bagit->verify_bag();
+	    $verified = $valid;
+	};
+	if (!$verified) {
+	    # Bag wasn't valid.
+	    die "Error verifying bag: $swiftdest\n";
+	}
+    } else {
+	# Copy single file
+
+	# Try to copy 3 times before giving up.
+	my $success=0;
+	for (my $tries=3 ; ($tries > 0) && ! $success ; $tries --) {
+	    try {
+		my $object = $self->swift->swift->object_get($self->swift->container,$swiftfile);
+		if ($object->code != 200) {
+		    warn "object_get container: '".$self->swift->container."' , object: '$swiftfile'  returned ". $object->code . " - " . $object->message. "\n";
+		} else {
+		    open(my $fh, '>:raw', $swiftdest)
+			or die "Could not open file '$swiftdest' $!";
+		    print $fh $object->content;
+		    close $fh;
+		    my $filemodified = $object->object_meta_header('File-Modified');
+		    if ($filemodified) {
+			my $dt = DateTime::Format::ISO8601->parse_datetime( $filemodified );
+			if (! $dt) {
+			    die "Couldn't parse ISO8601 date from $filemodified\n";
+			}
+			my $atime=time;
+			utime $atime, $dt->epoch(), $swiftdest;
+		    }
+		    $success=1;
+		};
+	    } catch {
+		$self->log->warn("Caught error while downloading $swiftfile from Swift: $_");
+	    };
+	}
+	die "Error downloading $swiftfile from Swift\n" if (! $success);
+    }
+    $self->log->info("$aip: Completed Swift copy to $swiftdest");
+
     if ($exportReq->{type} eq 'dmdSec') {
-	my $newdest=$rsyncdest;
+	my $newdest=$swiftdest;
 	$newdest =~ s/-dmdSec\.xml//;
-	CIHM::WIP::Export::ExtractDmd::extract($rsyncdest,$newdest);
-	unlink $rsyncdest or warn "Could not unlink $rsyncdest: $!\n";
+	CIHM::WIP::Export::ExtractDmd::extract($swiftdest,$newdest);
+	unlink $swiftdest or warn "Could not unlink $swiftdest: $!\n";
     }
 
     return $exportdoc;
-}
-
-
-sub rsync {
-    my ($self,$source,$destination) = @_;
-
-    # Don't preserve owner or group, so run as intended user.
-    my @rsynccmd=("rsync","-rlpt","--del","--partial","--timeout=10",$source,$destination);
-
-    my $rsyncexit = 30;
-    # https://download.samba.org/pub/rsync/rsync.html
-    # 10 - Error in socket I/O
-    # 12 - Error in rsync protocol data stream
-    # 30 - Timeout in data send/receive
-    while ($rsyncexit == 10 || $rsyncexit == 12 ||  $rsyncexit == 30 ) {
-        system(@rsynccmd);
-        if ($? == -1) {
-            die "@rsynccmd -- failed to execute: $!\n";
-        }
-        elsif ($? & 127) {
-            die "@rsynccmd -- nchild died with signal %d, %s coredump\n",
-            ($? & 127),  ($? & 128) ? 'with' : 'without';
-        }
-        $rsyncexit =  $? >> 8;
-    }
-    if ($rsyncexit) {
-        die "@rsynccmd -- child exited with value $rsyncexit\n";
-    }
 }
 
 1;
