@@ -4,7 +4,8 @@ use strict;
 use AnyEvent;
 use Try::Tiny;
 use CIHM::WIP;
-use CIHM::TDR::REST::ContentServer;
+use Config::General;
+use CIHM::Swift::Client;
 use CIHM::WIP::Mallet::Process;
 use Log::Log4perl;
 use JSON;
@@ -27,11 +28,25 @@ sub initworker {
         die "Wasn't able to build CIHM::WIP object\n";
     }
 
-    my %cosargs = (
-        jwt_payload => '{"uids":[".*"]}',
-        conf => $configpath
-        );
-    $self->{cserver} = new CIHM::TDR::REST::ContentServer(\%cosargs);
+    my %confighash = new Config::General(
+        -ConfigFile => $configpath,
+        )->getall;
+
+    # Undefined if no <swift> config block
+    if(exists $confighash{swift}) {
+        my %swiftopt = (
+            furl_options => { timeout => 120 }
+            );
+        foreach ("server","user","password","account", "furl_options") {
+            if (exists  $confighash{swift}{$_}) {
+                $swiftopt{$_}=$confighash{swift}{$_};
+            }
+        }
+        $self->{swift}=CIHM::Swift::Client->new(%swiftopt);
+        $self->{container}=$confighash{swift}{container};
+    } else {
+        die "No <swift> configuration block in ".$configpath."\n";
+    }
 
     Log::Log4perl->init_once("/etc/canadiana/wip/log4perl.conf");
     $self->{logger} = Log::Log4perl::get_logger("CIHM::WIP::Mallet");
@@ -48,9 +63,13 @@ sub WIP {
     my $self = shift;
     return $self->{WIP};
 }
-sub cserver {
+sub swift {
     my $self = shift;
-    return $self->{cserver};
+    return $self->{swift};
+}
+sub container {
+    my $self = shift;
+    return $self->{container};
 }
 sub wipmeta {
     my $self = shift;
@@ -125,7 +144,8 @@ sub swing {
                   configpath => $configpath,
                   hostname => $self->hostname,
                   WIP => $self->WIP,
-                  cserver => $self->cserver,
+                  swift => $self->swift,
+		  swiftcontainer => $self->container,
                   log => $self->log,
               });
           $processdoc = $process->process;

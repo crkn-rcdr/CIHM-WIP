@@ -103,9 +103,13 @@ sub WIP {
     my $self = shift;
     return $self->args->{WIP};
 }
-sub cserver {
+sub swift {
     my $self = shift;
-    return $self->args->{cserver};
+    return $self->args->{swift};
+}
+sub container {
+    my $self = shift;
+    return $self->args->{swiftcontainer};
 }
 sub wipmeta {
     my $self = shift;
@@ -712,17 +716,17 @@ sub add_dmdsec {
 sub manip_md {
     my ($self) = @_;
 
-    if (!($self->cserver)) {
-        die "<content> config missing from config file\n";
+    if (!($self->swift)) {
+        die "<swift> config missing from config file\n";
     }
     my $mdfile=$self->aip."/data/sip/data/metadata.xml";
-    my $r = $self->cserver->get("/$mdfile", {file => $mdfile});
+    my $r = $self->swift->swift_object_get($self->container, $mdfile);
     if ($r->code != 200) {
         warn "Error: ".$r->error."\n" if $r->error;
-        die "ContentServer get of $mdfile returned".$r->code."\n";
+        die "Swift get of $mdfile returned".$r->code."\n";
     }
 
-    my $doc=XML::LibXML->new->parse_string($r->response->decoded_content);
+    my $doc=XML::LibXML->new->parse_string($r->content);
     my $xpc = XML::LibXML::XPathContext->new($doc);
     $xpc->registerNs('mets', 'http://www.loc.gov/METS/');
     $xpc->registerNs('xlink', 'http://www.w3.org/1999/xlink');
