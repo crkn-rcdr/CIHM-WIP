@@ -88,7 +88,7 @@ sub warnings {
     $warning =~ s/[^\x00-\x7f]//g;
     $self->log->warn($warning);
 
-    push $self->{warnings},$warning;
+    push @{$self->{warnings}},$warning;
 
     if (!($self->quiet)) {
         print STDERR $warning;
@@ -110,7 +110,7 @@ sub walk_filesystem {
         $self->aipfs->{$docid}=$fsid->{doc};
     }
 
-    my @stages=keys $self->WIP->stages;
+    my @stages=keys %{$self->WIP->stages};
     foreach my $stage (@stages) {
         my $path=$self->WIP->stages->{$stage}; 
         if ($stage ne 'Trashcan') {
@@ -143,7 +143,7 @@ sub walk_stage {
         }
         closedir $dh;
 
-        foreach my $configid (keys $self->configdocs) {
+        foreach my $configid (keys %{$self->configdocs}) {
             my $fullpath=$path."/".$configid;
             if (! -d $fullpath) {
                 if (! mkdir($fullpath)) {
@@ -159,8 +159,8 @@ sub walk_stage {
 sub hasSameClassify {
     my ($nclassify,$oclassify) = @_;
 
-    my @nkeys=sort(keys $nclassify);
-    my @okeys=sort(keys $oclassify);
+    my @nkeys=sort(keys %{$nclassify});
+    my @okeys=sort(keys %{$oclassify});
     if (scalar(@nkeys) != scalar(@okeys)) {
         return 0;
     }
@@ -233,7 +233,7 @@ sub walk_identifiers {
                                  exists $retdata->{'identifier'}) {
 
                             # Check if there is a duplicate
-                            my @stages=keys $self->WIP->stages;
+                            my @stages=keys %{$self->WIP->stages};
                             foreach my $stage (@stages) {
                                 if ($stage ne $name) {
                                     if (-d $self->WIP->stages->{$stage}."/".$configid."/".$identifier) {

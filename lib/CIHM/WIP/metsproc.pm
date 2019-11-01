@@ -83,7 +83,7 @@ sub warnings {
     $warning =~ s/[^\x00-\x7f]//g;
     $self->log->warn($warning);
 
-    push $self->{warnings},$warning;
+    push @{$self->{warnings}},$warning;
 }
 
 
@@ -114,7 +114,7 @@ sub run {
             $self->{dirmove}=[];
             delete $self->{error};
 
-            foreach my $configid (keys $configdocs) {
+            foreach my $configid (keys %{$configdocs}) {
                 my $configdir=File::Spec->catdir($base,$configid);
                 if (! -d $configdir) {
                     make_path($configdir) 
@@ -304,7 +304,7 @@ sub scan_config_dir {
                     }
                     $self->rename_mdfile($pathname,($error?$rejectpath:$trashpath));
                 };
-                push $self->{output},$thisoutput;
+                push @{$self->{output}},$thisoutput;
             };
         }
     } else {

@@ -88,7 +88,7 @@ sub findstagei {
     my ($findstage) = lc shift;
     my $stages=$self->stages;
     if ($stages) {
-        foreach my $thisstage (keys $stages) {
+        foreach my $thisstage (keys %{$stages}) {
             if (lc($thisstage) eq $findstage) {
                 return $thisstage;
             }
@@ -153,7 +153,7 @@ sub parse_uid {
 sub find_rsync {
     my($self, $path) = @_;
     if (defined $self->wipconfig->{paths}) {
-        foreach my $checkpath (keys $self->wipconfig->{'paths'}) {
+        foreach my $checkpath (keys %{$self->wipconfig->{'paths'}}) {
             my $rsyncurl =  $self->wipconfig->{'paths'}->{$checkpath};
             if (substr($path,0,length($checkpath)) eq $checkpath) {
                 return ($rsyncurl,substr($path,length($checkpath)));

@@ -271,7 +271,7 @@ sub scan_workdir {
 
     # The basenames of the images need to be named such that when
     # alphabetically sorted they are in correct sequence order.
-    my @componentorder=sort(keys $self->{components});
+    my @componentorder=sort(keys %{$self->{components}});
 
     # If config field exists, enforce it now that @componentorder is
     # based on the images found.
@@ -314,7 +314,7 @@ sub scan_workdir {
     }
     if ($componentpdf) {
         # If any component image has a related PDF, then they all should.
-        foreach my $component (keys $self->{components}) {
+        foreach my $component (keys %{$self->{components}}) {
             if (!defined $self->{components}{$component}{pdf}) {
                 die "Component $component missing associated PDF file\n";
             }

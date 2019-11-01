@@ -77,7 +77,7 @@ sub warnings {
     $warning =~ s/[^\x00-\x7f]//g;
     $self->log->warn($warning);
 
-    push $self->{warnings},$warning;
+    push @{$self->{warnings}},$warning;
 
 }
 
@@ -308,14 +308,14 @@ sub scan_objid_dir {
                                 die "Could not rename $mvfile to $dest/$fname: $!\n";
                             }
                         }
-                        push $self->{aiplist},$identifier;
+                        push @{$self->{aiplist}},$identifier;
                         $self->rename_dir($params,'trash',$file);
                     } catch {
                         warn "Caught error: $_";
                         $error=1;
                         $self->rename_dir($params,'reject',$file);
                         next;
-                    }
+                    };
                 } else {
                     warn "There were no matching files in $fullpath\n";
                     $error=1;
@@ -368,10 +368,10 @@ sub rename_dir {
             make_path($destdir);
         }
         rename ($sourcename, $destname) || die "Could not rename $sourcename to $destname: $!\n";
-        push $self->{dirmove},"Renamed $sourcename to $destname\n";
+        push @{$self->{dirmove}},"Renamed $sourcename to $destname\n";
     } catch {
         warn "Caught error: $_";
-    }
+    };
 }
 
 1;
