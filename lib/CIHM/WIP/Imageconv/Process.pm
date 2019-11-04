@@ -235,6 +235,9 @@ sub domagick {
         switch ($status) {
             # Skip Exif ImageUniqueID
             case /Unknown field with tag 42016 / {}
+# https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/imageuniqueid.html
+            case /Unknown field with tag 41728 / {}
+# https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/filesource.html
             else {
                 die "$origpath Read: $status\n";
             }
