@@ -548,92 +548,11 @@ sub add_fptr {
     $div->appendChild($fptr);
 }
 
-# Temporarily handle in this function
-# Will be running JHOVE in separate microservice
-sub generate_jhove {
-    my ($self,$relfilepath,$relmdpath,$mimetype) = @_;
-
-    my $filepath= File::Spec->rel2abs($relfilepath,$self->workdata);
-    my $mdpath= File::Spec->rel2abs($relmdpath,$self->workdata);
-
-    my $module;
-    switch ($mimetype) {
-        case 'image/jpeg' {$module='JPEG-hul';}
-        case 'image/jp2' {$module='JPEG2000-hul';}
-        case 'image/tiff' {$module='TIFF-hul';}
-        case 'application/pdf' {$module='PDF-hul';}
-        case 'application/xml' {$module='XML-hul';}
-        else {die "unknown mime type=$mimetype for $relfilepath\n";}
-    }
-    my @command=("/opt/jhove/jhove", # TODO: in config file?
-                 "-k","-m",$module,"-h","xml","-o",$mdpath,$filepath);
-
-    system(@command) == 0 
-            or die "shell command @command failed: $?";
-
-    # Parse file to adjust uri, but also verifies basic format of file.
-    my $jhove = eval { XML::LibXML->new->parse_file($mdpath) };
-    if ($@) {
-        die "parse_file($mdpath): $@\n";
-    }
-
-    # Document should have only one <jhove> child
-    my @jchildren=$jhove->childNodes();
-    if (scalar(@jchildren) != 1) {
-        die "$mdpath has ".scalar(@jchildren)." children\n";
-    }
-    my $jn=$jchildren[0];
-    if ($jn->nodeName ne 'jhove') {
-        die "$mdpath has ".$jn->nodeName." named node\n";
-    }
-    my $repcount=0;
-    foreach my $thisnode ($jn->nonBlankChildNodes()) {
-        if ($thisnode->nodeName eq 'repInfo') {
-            $thisnode->setAttribute('uri',$relfilepath);
-            $repcount++;
-        }
-    }
-    if ($repcount != 1) {
-        die "$mdpath didn't have exactly 1 repInfo children\n";
-    }
-    $jhove->toFile($mdpath,1);
-}
-
-
 sub add_file {
     my($self,$filegrp, $fileuse, $id, $mimetype, $loctype, $href) = @_;
     my $file = $self->doc->createElement('mets:file');
     $file->setAttribute('USE', $fileuse);
     my $flocat = $self->doc->createElement('mets:FLocat');
-    if ($mimetype ne 'text/html') {
-
-        my $admid="jhove_$id";
-
-        my $relfilepath=$href;
-        if ($loctype eq 'URN') {
-            $relfilepath="files/$href"; 
-        }
-        my ($junk,$junk,$filename)=File::Spec->splitpath($relfilepath);
-        my $relmdpath="metadata/$filename.jhove.xml";
-
-        $self->generate_jhove($relfilepath,$relmdpath,$mimetype);
-
-        my $techmd=$self->doc->createElement('mets:techMD');
-        $techmd->setAttribute('ID',$admid);
-
-        my $mdref=$self->doc->createElement('mets:mdRef');
-
-        $mdref->setAttribute('LOCTYPE', 'URL');
-        $mdref->setAttribute('xlink:href', $relmdpath);
-        $mdref->setAttribute('MIMETYPE', 'text/xml');
-        $mdref->setAttribute('MDTYPE', 'OTHER');
-        $mdref->setAttribute('OTHERMDTYPE', 'jhove');
-
-        $techmd->appendChild($mdref);
-        $self->amdsec->appendChild($techmd);
-
-        $file->setAttribute('ADMID', $admid);
-    }
     $file->setAttribute('ID', $id);
     $file->setAttribute('MIMETYPE', $mimetype);
     $flocat->setAttribute('LOCTYPE', $loctype);
