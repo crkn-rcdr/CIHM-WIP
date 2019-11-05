@@ -223,6 +223,8 @@ sub process {
     # Get basic information about AIP
     my $ingestdoc = $self->repo->get_manifestinfo($aipdir);
 
+    $self->log->info($self->aip.": Copying $aipdir to Swift");
+
     # Try to copy 3 times before giving up.
     my $success=0;
     for (my $tries=3 ; ($tries > 0) && ! $success ; $tries --) {
@@ -233,7 +235,7 @@ sub process {
     }
     die "Failure while uploading ".$self->aip." to $aipdir\n" if (!$success);
 
-    $self->log->info($self->aip.": Swift copy of $aipdir");
+    $self->log->info($self->aip.": Swift copy of $aipdir complete, Validating");
 
     my $validate = $self->swift->validateaip($self->aip);
 
