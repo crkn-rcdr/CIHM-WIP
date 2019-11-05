@@ -232,15 +232,23 @@ sub domagick {
     my $status = $p->Read($origpath);
 
     if ($status) {
+	my $error;
         switch ($status) {
             # Skip Exif ImageUniqueID
             case /Unknown field with tag 42016 / {}
 # https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/imageuniqueid.html
             case /Unknown field with tag 41728 / {}
 # https://www.awaresystems.be/imaging/tiff/tifftags/privateifd/exif/filesource.html
+	    case /Unknown field with tag 59932 / {} # 0xea1c	Padding
+	    case /Exception 350: .*; tag ignored/ {}
             else {
-                die "$origpath Read: $status\n";
+                $error=1;
             }
+        }
+	if ($error) {
+		die "$origpath Read: $status\n";
+	} else {
+		warn "$origpath Read: $status\n";
         }
     }
 
