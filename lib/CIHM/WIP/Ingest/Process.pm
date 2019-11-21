@@ -11,8 +11,6 @@ use Archive::BagIt::Fast;
 use Archive::BagIt;
 use Switch;
 use POSIX qw(strftime);
-
-
 use Data::Dumper;
 
 =head1 NAME
@@ -301,13 +299,18 @@ sub copy_sip {
 sub ingest_setup {
     my ($self,$aipdir) = @_;
 
-    my $res = $self->tdrepo->post("/".$self->tdrepo->database."/_design/tdr/_view/newestaip?group=true",{ keys => [ $self->aip ]}, {deserializer => 'application/json'});
+    my @aipids;
+    push @aipids, $self->aip;
+    my $postdata={ keys => \@aipids };
+
+    my $request="/".$self->tdrepo->database."/_design/tdr/_view/newestaip?group=true";
+    my $res = $self->tdrepo->post($request,$postdata, {deserializer => 'application/json'});
     if ($res->code == 200) {
         if (defined $res->data->{rows} && scalar(@{$res->data->{rows}})) {
             $self->{aiprepos} = \@{$res->data->{rows}->[0]->{value}[1]};
         }
     } else {
-        die "_view/newestaip during ingest_setup() for ".$self->aip." returned: " . $res->code."\n";
+        die "Request=$request(".to_json($postdata).") during ingest_setup() returned: " . $res->code."\n";
     }
 
 
