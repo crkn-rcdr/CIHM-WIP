@@ -304,6 +304,7 @@ sub ingest_setup {
     my $postdata={ keys => \@aipids };
 
     my $request="/".$self->tdrepo->database."/_design/tdr/_view/newestaip?group=true";
+    $self->tdrepo->type("application/json");
     my $res = $self->tdrepo->post($request,$postdata, {deserializer => 'application/json'});
     if ($res->code == 200) {
         if (defined $res->data->{rows} && scalar(@{$res->data->{rows}})) {
