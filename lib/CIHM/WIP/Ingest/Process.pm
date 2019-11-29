@@ -149,8 +149,8 @@ sub process {
 
     switch ($self->ingesttype) {
 
+	make_path("$aipdir/data/revisions") or die("Failed to create $aipdir/data/revisions: $!");
         case "new"  {
-            make_path("$aipdir/data/revisions") or die("Failed to create $aipdir/data/revisions: $!");
             $self->copy_sip($aipdir);
             $self->tdr->changelog($aipdir, "Created new AIP");
             $self->log->info($self->aip.": Created new AIP in $aipdir");
