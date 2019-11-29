@@ -639,7 +639,7 @@ sub manip_md {
         die "<swift> config missing from config file\n";
     }
     my $mdfile=$self->aip."/data/sip/data/metadata.xml";
-    my $r = $self->swift->swift_object_get($self->container, $mdfile);
+    my $r = $self->swift->object_get($self->container, $mdfile);
     if ($r->code != 200) {
         warn "Error: ".$r->error."\n" if $r->error;
         die "Swift get of $mdfile returned".$r->code."\n";
