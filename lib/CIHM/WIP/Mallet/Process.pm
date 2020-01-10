@@ -641,8 +641,7 @@ sub manip_md {
     my $mdfile=$self->aip."/data/sip/data/metadata.xml";
     my $r = $self->swift->object_get($self->container, $mdfile);
     if ($r->code != 200) {
-        warn "Error: ".$r->error."\n" if $r->error;
-        die "Swift get of $mdfile returned".$r->code."\n";
+        die "Swift get of $mdfile returned " . $r->code . " : ".$r->message."\n";
     }
 
     my $doc=XML::LibXML->new->parse_string($r->content);
