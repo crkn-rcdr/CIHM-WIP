@@ -149,7 +149,9 @@ sub process {
 
     switch ($self->ingesttype) {
 
-	make_path("$aipdir/data/revisions") or die("Failed to create $aipdir/data/revisions: $!");
+	if (! -d "$aipdir/data/revisions") {
+	    make_path("$aipdir/data/revisions") or die("Failed to create $aipdir/data/revisions: $!\n");
+	}
         case "new"  {
             $self->copy_sip($aipdir);
             $self->tdr->changelog($aipdir, "Created new AIP");
@@ -231,7 +233,7 @@ sub process {
 	    $success=1;
 	};
     }
-    die "Failure while uploading ".$self->aip." to $aipdir\n" if (!$success);
+    die "Failure while uploading ".$self->aip." to Swift\n" if (!$success);
 
     $self->log->info($self->aip.": Swift copy of $aipdir complete, Validating");
 
@@ -243,7 +245,7 @@ sub process {
 		'manifest md5' => $validate->{'manifest md5'}
 					      });
     } else {
-	die("validation of ".$self->aip." failed");
+	die("validation of ".$self->aip." failed\n");
     }
 
     # Remove temporary AIP build directory
@@ -335,7 +337,7 @@ sub ingest_setup {
 		$success=1;
 	    };
 	}
-	die "Error downloading from Swift\n" if (! $success);
+	die "Error downloading existing AIP from Swift\n" if (! $success);
 
 	my $verified;
 	try {
@@ -345,7 +347,7 @@ sub ingest_setup {
 	};
 	if (!$verified) {
 	    # Bag wasn't valid.
-	    die "Error verifying bag: $aipdir\n";
+	    die "Error verifying AIP downloaded from Swift: $aipdir\n";
 	}
     } else {
         if ($self->ingesttype ne 'new' ) {
