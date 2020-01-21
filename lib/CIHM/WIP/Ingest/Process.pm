@@ -129,6 +129,10 @@ sub tempdir {
     my $self = shift;
     return $self->args->{tempdir};
 }
+sub outbox {
+    my $self = shift;
+    return $self->args->{outbox};
+}
 sub stages {
     my $self = shift;
     return $self->args->{stages};
@@ -223,33 +227,10 @@ sub process {
     # Get basic information about AIP
     my $ingestdoc = $self->repo->get_manifestinfo($aipdir);
 
-    $self->log->info($self->aip.": Copying $aipdir to Swift");
+    my $destdir = $self->outbox."/".$self->aip;
+    $self->rsync($aipdir."/.",$destdir);
 
-    # Try to copy 5 times before giving up.
-    my $success;
-    for (my $tries=5 ; ($tries > 0) && ! $success ; $tries --) {
-	try {
-	    $self->swift->bag_upload($aipdir,$self->aip);
-	    $success=1;
-	};
-	if ($success) {
-	    $self->log->info($self->aip.": Swift copy of $aipdir complete, Validating");
-	    my $validate = $self->swift->validateaip($self->aip);
-	    if ($validate->{'validate'}) {
-		$self->tdrepo->update_item_repository($self->aip, {
-		    'manifest date' => $validate->{'manifest date'},
-			'manifest md5' => $validate->{'manifest md5'}
-						      });
-	    } else {
-		warn("validation of ".$self->aip." failed\n");
-		$success=0;
-	    }
-	};
-	if (($tries > 0) && ! $success) {
-	    sleep(30); # Sleep for 30 seconds before trying again
-	}
-    }
-    die "Failure while uploading ".$self->aip." to Swift\n" if (!$success);
+    $self->log->info($self->aip.": rsync $aipdir $destdir");
 
     # Remove temporary AIP build directory
     remove_tree($aipdir) or die("Failed to remove $aipdir: $!");

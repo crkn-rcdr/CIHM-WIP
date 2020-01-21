@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+use Getopt::Long;
+use CIHM::WIP::Copy2Swift;
+use Fcntl qw(:DEFAULT :flock);
+
+
+
+
+my $conf = "/etc/canadiana/wip/wip.conf";
+my $skip = 0;
+my $maxprocs = 4;
+my $limit;
+my $timelimit;
+my $lockfile = '/var/lock/tdr/wip-copy2swift';
+GetOptions (
+    'conf:s' => \$conf,
+    'skip:i' => \$skip,
+    'maxprocs:i' => \$maxprocs,
+    'limit:i' => \$limit,
+    'timelimit:i' => \$timelimit
+    );
+
+if ($lockfile ne 'none') {
+  # Only allow one instance to run at a time..
+  sysopen(FH, $lockfile, O_WRONLY | O_CREAT) 
+    or die "can't open lockfile=$lockfile: $!\n";
+  flock(FH, LOCK_EX | LOCK_NB)
+    or exit 0;
+}
+
+
+CIHM::WIP::Copy2Swift->new({ 
+    configpath => $conf, skip => $skip, maxprocs => $maxprocs, 
+    limit => $limit, timelimit => $timelimit
+                        })->copy;
+
+1;
+__END__

@@ -1,4 +1,4 @@
-package CIHM::WIP::Ingest::Worker;
+package CIHM::WIP::Copy2Swift::Worker;
 
 use strict;
 use AnyEvent;
@@ -9,8 +9,7 @@ use CIHM::TDR::Swift;
 use CIHM::TDR::Repository;
 use CIHM::TDR::REST::wipmeta;
 use CIHM::TDR::REST::tdrepo;
-use CIHM::TDR::ContentServer;
-use CIHM::WIP::Ingest::Process;
+use CIHM::WIP::Copy2Swift::Process;
 use JSON;
 use Data::Dumper;
 use Net::Domain qw(hostname hostfqdn hostdomain domainname);
@@ -46,15 +45,7 @@ sub initworker {
     }
 
     # So far we only need a few options (existance checked earlier)
-    $self->{tempdir} = $confighash{ingest}{tempdir};
-    $self->{outbox} = $confighash{ingest}{outbox};
-    $self->{outbox} =~ s|/+$||; # trim any trailing slash
-    if (exists $confighash{stages} &&
-        ref($confighash{stages}) eq "HASH") {
-        $self->{stages} = $confighash{stages};
-    } else {
-        die "Missing <stages> configuration\n"
-    }
+    $self->{aipdir} = $confighash{copy2swift}{aipdir};
 
     # Undefined if no <wipmeta> config block
     if (exists $confighash{wipmeta}) {
@@ -67,11 +58,6 @@ sub initworker {
             );
     } else {
         die "Missing <wipmeta> configuration block in config\n";
-    }
-
-    $self->{cserver} = new CIHM::TDR::ContentServer($configpath);
-    if (!$self->{cserver}) {
-        die "Missing ContentServer configuration.\n";
     }
 
     $self->{swift} = new CIHM::TDR::Swift({
@@ -112,17 +98,9 @@ sub hostname {
     my $self = shift;
     return $self->{hostname};
 }
-sub tempdir {
+sub aipdir {
     my $self = shift;
-    return $self->{tempdir};
-}
-sub outbox {
-    my $self = shift;
-    return $self->{outbox};
-}
-sub stages {
-    my $self = shift;
-    return $self->{stages};
+    return $self->{aipdir};
 }
 
 
@@ -141,7 +119,7 @@ sub warnings {
 }
 
 
-sub ingest {
+sub copy {
   my ($aip,$date,$configpath) = @_;
   our $self;
 
@@ -159,7 +137,7 @@ sub ingest {
   # Accept Job, but also check if someone else already accepted it
   my $res = $self->wipmeta->update_basic($aip,{
       "processing" => encode_json({
-          request => 'ingest',
+          request => 'copyingest2swift',
           reqdate => $date,
           host => $self->hostname
                                   })
@@ -184,19 +162,16 @@ sub ingest {
       # Handle and record any errors
       try {
           $status = JSON::true;
-          my $process = new  CIHM::WIP::Ingest::Process(
+          my $process = new  CIHM::WIP::Copy2Swift::Process(
               {
                   aip => $aip,
                   configpath => $configpath,
                   log => $self->log,
                   tdr => $self->tdr,
                   wipmeta => $self->wipmeta,
-		  swift => $self->swift,
+		          swift => $self->swift,
                   repo => $self->repo,
-                  hostname => $self->hostname,
-                  tempdir => $self->tempdir,
-                  outbox => $self->outbox,
-                  stages => $self->stages
+                  aipdir => $self->aipdir,
               });
           $processdoc = $process->process;
       } catch {
@@ -206,7 +181,7 @@ sub ingest {
       };
       $processdoc->{status}=$status;
       $processdoc->{message}=$self->{message};
-      $processdoc->{request}='ingest';
+      $processdoc->{request}='copyingest2swift';
       $processdoc->{reqdate}=$date;
       $processdoc->{host}=$self->hostname;
       $self->postResults($aip,$processdoc);
