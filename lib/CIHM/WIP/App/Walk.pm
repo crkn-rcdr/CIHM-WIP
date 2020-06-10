@@ -1,12 +1,12 @@
 package CIHM::WIP::App::Walk;
 
 use common::sense;
-use Data::Dumper;
 use MooseX::App::Command;
 use CIHM::WIP;
 use File::Spec;
 use JSON;
 use Filesys::DfPortable;
+use DateTime;
 
 use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
@@ -39,9 +39,11 @@ sub run {
     local $SIG{__WARN__} = sub { &warnings };
 
     $self->{WIP} = CIHM::WIP->new( $self->conf );
-    my $stages = $self->WIP->stages
-      || die "Missing <stages> section of config file\n";
-    die "Can't retrieve configurationdocuments\n" if ( !$self->configdocs );
+
+    die "<wipmeta> access to database not configured\n"
+      if ( !$self->WIP->wipmeta );
+    die "Missing <stages> section of config file\n" if ( !$self->WIP->stages );
+    die "Can't retrieve configurationdocuments\n"   if ( !$self->configdocs );
 
     # Hash where keys represent filesystem, value is AIP
     $self->{onfs} = {};
@@ -51,6 +53,10 @@ sub run {
 
     # Set up array to accept warnings, to be sent in nag email.
     $self->{warnings} = [];
+
+    # Hash for details on disk usage
+    my $wippath = $self->WIP->wipconfig->{wipdir};
+    $self->{df} = dfportable($wippath);
 
     # First walk the filesystem looking for directories, and update DB
     # with current location.
@@ -63,6 +69,8 @@ sub run {
     if ( $self->report && $self->report ne '' ) {
         $self->gen_report();
     }
+
+    $self->storeDB();
 }
 
 sub WIP {
@@ -78,6 +86,11 @@ sub onfs {
 sub aipfs {
     my $self = shift;
     return $self->{aipfs};
+}
+
+sub df {
+    my $self = shift;
+    return $self->{df};
 }
 
 sub configdocs {
@@ -432,17 +445,18 @@ sub gen_report {
     #
     $report .= "\n\nPackaging disk usage:\n\n";
 
-    my $wippath = $self->WIP->wipconfig->{wipdir};
-    my $ref     = dfportable($wippath);
+    my $totalh = formatSize( $self->df->{blocks} );
+    $report .= "Total: $totalh (" . $self->df->{blocks} . " bytes)\n";
 
-    my $totalh = formatSize( $ref->{blocks} );
-    $report .= "Total: $totalh ($ref->{blocks} bytes)\n";
+    my $freeh = formatSize( $self->df->{bfree} );
+    $report .= "Free: $freeh (" . $self->df->{bfree} . " bytes)\n";
 
-    my $freeh = formatSize( $ref->{bfree} );
-    $report .= "Free: $freeh ($ref->{bfree} bytes)\n";
-
-    my $usedh = formatSize( $ref->{bused} );
-    $report .= "Used: $usedh ($ref->{bused} bytes) = $ref->{per}%\n\n";
+    my $usedh = formatSize( $self->df->{bused} );
+    $report .=
+        "Used: $usedh ("
+      . $self->df->{bused}
+      . " bytes) = "
+      . $self->df->{per} . "%\n\n";
 
     #
     # Get the ingest statistics
@@ -539,10 +553,37 @@ sub formatSize {
         $exp++;
     }
 
-    return
-      wantarray
+    return wantarray
       ? ( $size, $units->[$exp] )
       : sprintf( "%.2f %s", $size, $units->[$exp] );
+}
+
+sub storeDB {
+    my $self = shift;
+
+    my $wipmeta = $self->WIP->wipmeta;
+    my $docid   = "wipwalk.wipwalk";
+
+    my $dt  = DateTime->now;
+
+    my $doc = {
+        "_id"    => $docid,
+        warnings => $self->{warnings},
+        df       => $self->{df},
+        updated  => $dt->datetime . "Z"
+    };
+    my $res = $wipmeta->head( "/" . $wipmeta->database . "/$docid" );
+    if ( $res->code == 200 ) {
+        my $etag = $res->response->header('ETag');
+        $etag =~ s/^"(.*)"$/$1/;
+        $doc->{'_rev'} = $etag;
+    }
+    $wipmeta->type('application/json');
+    $res = $wipmeta->put( "/" . $wipmeta->database . "/$docid",
+        $doc, { deserializer => 'application/json' } );
+    if ( $res->code != 201 ) {
+        warn "put $docid return code: " . $res->code . "\n";
+    }
 }
 
 1;
