@@ -274,6 +274,8 @@ sub copy_sip {
         my $bagit = new Archive::BagIt::Fast("$aipdir/data/sip");
         my $valid = $bagit->verify_bag();
         $verified = $valid;
+    } catch {
+        warn "Warnings from Archive::BagIt::Fast: \n". $_ . "\n";
     };
     if (!$verified) {
         # Bag wasn't valid.
@@ -319,7 +321,9 @@ sub ingest_setup {
 	    try {
 		$self->swift->bag_download($self->aip,$aipdir);
 		$success=1;
-	    };
+	    } catch {
+            warn ("Warnings from bag_download: ".$_."\n");
+        };
 	}
 	die "Error downloading existing AIP from Swift\n" if (! $success);
 
@@ -328,7 +332,9 @@ sub ingest_setup {
 	    my $bagit = new Archive::BagIt::Fast($aipdir);
 	    my $valid = $bagit->verify_bag();
 	    $verified = $valid;
-	};
+	} catch {
+        warn ("Warnings from Archive::BagIt::Fast\n". $_ . "\n");
+    };
 	if (!$verified) {
 	    # Bag wasn't valid.
 	    die "Error verifying AIP downloaded from Swift: $aipdir\n";
