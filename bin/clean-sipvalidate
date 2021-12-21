@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mkdir -p /home/tdr/tempIngest/sipvalidate
+find /home/tdr/tempIngest/sipvalidate -mindepth 1 -maxdepth 1 -mmin +360 -exec rm -rf {} \;
