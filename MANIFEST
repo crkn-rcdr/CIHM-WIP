@@ -2,7 +2,6 @@ bin/mallet
 bin/tdringest
 bin/wip
 bin/wip-imageconv
-bin/wip-metsproc
 bin/wip-move
 bin/wip-tdrexport
 bin/wip-unitize
@@ -32,7 +31,6 @@ lib/CIHM/WIP/Ingest/Worker.pm
 lib/CIHM/WIP/Mallet.pm
 lib/CIHM/WIP/Mallet/Process.pm
 lib/CIHM/WIP/Mallet/Worker.pm
-lib/CIHM/WIP/metsproc.pm
 lib/CIHM/WIP/move.pm
 lib/CIHM/WIP/REST/tdrepo.pm
 lib/CIHM/WIP/REST/wipmeta.pm

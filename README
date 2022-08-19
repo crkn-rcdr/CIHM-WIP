@@ -20,9 +20,6 @@ what work needs to be done, and submits results back to CouchDB.
 
 * wip-imageconv - Will convert supplied image files to another format.
 
-* wip-metsproc - extracts descriptive metadata from saved files and loads
-                 into CouchDB (preparing for SIP generation)
-
 * wip-move - moves files between different 'stages' used to manage
              processes.
 
