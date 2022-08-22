@@ -11,7 +11,7 @@ WriteMakefile(
     LICENSE          => 'Artistic_2',
     PL_FILES         => {},
     "EXE_FILES"      => [
-	"bin/wip", "bin/wip-imageconv", "bin/wip-metsproc", "bin/wip-move", "bin/wip-tdrexport", "bin/wip-unitize", "bin/mallet", "bin/tdringest"
+	"bin/wip", "bin/wip-imageconv", "bin/wip-move", "bin/wip-tdrexport", "bin/wip-unitize", "bin/mallet", "bin/tdringest"
     ],
     MIN_PERL_VERSION => 5.006,
     CONFIGURE_REQUIRES => {
