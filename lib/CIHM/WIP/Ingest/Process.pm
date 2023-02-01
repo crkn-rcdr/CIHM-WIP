@@ -287,14 +287,19 @@ sub make_bag {
     opendir( my $dh, $bagdir ) || die "Can't opendir $bagdir: $!";
     while ( readdir $dh ) {
         if ( -d "$bagdir/$_" ) {
-            warn "$bagdir/$_ is a directory\n";
+            if ( $_ ne "." && $_ ne ".." && $_ ne "data" ) {
+                warn "$bagdir/$_ is a directory\n";
+            }
         }
         elsif ( -f "$bagdir/$_" ) {
-            warn "$bagdir/$_ is a file\n";
+            push @todel, "$bagdir/$_";
         }
         else {
             warn "$bagdir/$_ is unknown?\n";
         }
+    }
+    foreach my $file (@todel) {
+        unlink $file or warn "Could not unlink $file: $!";
     }
     Archive::BagIt->make_bag($bagdir);
 }
