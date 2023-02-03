@@ -168,34 +168,20 @@ sub process {
     my $aipdir = $self->aipdir;
     $self->ingest_setup($aipdir);
 
+    if ( !-d "$aipdir/data/revisions" ) {
+        make_path("$aipdir/data/revisions")
+          or die("Failed to create $aipdir/data/revisions: $!\n");
+    }
+    if ( -f "$aipdir/data/cmr.xml" ) {
+        unlink "$aipdir/data/cmr.xml";
+    }
+
     switch ( $self->ingesttype ) {
 
-        if ( !-d "$aipdir/data/revisions" ) {
-            make_path("$aipdir/data/revisions")
-              or die("Failed to create $aipdir/data/revisions: $!\n");
-        }
         case "new" {
             $self->copy_sip($aipdir);
             $self->tdr->changelog( $aipdir, "Created new AIP" );
             $self->log->info( $self->aip . ": Created new AIP in $aipdir" );
-        }
-
-        case "update" {
-            my $revision_name = strftime( "%Y%m%dT%H%M%S", gmtime(time) );
-            move( "$aipdir/data/sip", "$aipdir/data/revisions/$revision_name" )
-              or die(
-"Failed to move $aipdir/data/sip to $aipdir/data/revisions/$revision_name: $!"
-              );
-            $self->copy_sip($aipdir);
-
-            # Check for duplicate metadata.xml
-            $self->checkdup($aipdir);
-
-            $self->tdr->changelog( $aipdir,
-                "Updated SIP; old SIP stored as revision $revision_name" );
-            $self->log->info( $self->aip
-                  . ": Updated SIP in $aipdir; old SIP stored as revision $revision_name"
-            );
         }
 
         case "metadata" {
